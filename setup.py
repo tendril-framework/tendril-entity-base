@@ -22,7 +22,7 @@ test_requirements = [
 
 setup(
     name='tendril-entities-base',
-    version='0.1.1',
+    version='0.1.2',
     description="Tendril Entity Primitives",
     long_description=readme,
     author="Chintalagiri Shashank",
