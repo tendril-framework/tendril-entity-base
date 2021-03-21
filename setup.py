@@ -29,6 +29,7 @@ def read(fname):
 
 
 core_dependencies = [
+    'tendril-validation',
 ]
 
 install_requires = core_dependencies + ['wheel']

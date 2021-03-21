@@ -15,28 +15,32 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This file is part of tendril
-See the COPYING, README, and INSTALL files for more information
 """
+
+from tendril.validation.base import ValidatableBase
 
 
 class EntityNotFound(Exception):
     pass
 
 
-class EntityBase(object):
+class EntityHasNoStructure(Exception):
+    pass
+
+
+class EntityBase(ValidatableBase):
     """ Placeholder class for potentially track-able objects.
 
         Depending on the implementation used, this class should inherit from
         an external class built for this purpose instead of from ``object``.
 
     """
-    def __init__(self):
+    def __init__(self, vctx=None):
+        super(EntityBase, self).__init__(vctx)
         self._defined = False
-        self._refdes = ''
 
     def define(self, *args, **kwargs):
-        raise NotImplementedError
+        self._defined = True
 
     @property
     def defined(self):
@@ -51,71 +55,90 @@ class EntityBase(object):
     def ident(self):
         raise NotImplementedError
 
-    @ident.setter
-    def ident(self, value):
+    @property
+    def refdes(self):
         raise NotImplementedError
 
     @property
-    def refdes(self):
-        """ Refdes string. """
-        return self._refdes
+    def desc(self):
+        raise NotImplementedError
 
-    @refdes.setter
-    def refdes(self, value):
-        self._refdes = value
+    def _validate(self):
+        pass
 
 
-class GenericEntityBase(EntityBase):
-    def __init__(self, ident=None, refdes=None):
-        super(GenericEntityBase, self).__init__()
-        self._ident = ident
-        self._refdes = refdes
+class StructuredEntityBase(EntityBase):
+    def __init__(self):
+        self._structure = None
+        super(StructuredEntityBase, self).__init__()
+
+    @property
+    def structure(self):
+        if not self._structure:
+            raise EntityHasNoStructure()
+        return self._structure
+
+    @structure.setter
+    def structure(self, value):
+        if self._structure:
+            raise ValueError("Structure is already set for this entity.")
+        self._structure = value
+
+    def insert(self, item, *args, **kwargs):
+        self.structure.insert(item, *args, **kwargs)
+
+    def contents(self):
+        return self.structure.contents()
+
+    def _validate(self):
+        pass
+
+
+class GenericEntity(StructuredEntityBase):
+    def __init__(self):
+        self._ident = None
+        self._desc = None
+        self._refdes = None
+        super(GenericEntity, self).__init__()
 
     @property
     def ident(self):
         return self._ident
 
-    def define(self, ident, refdes):
-        self._ident = ident
-        self._refdes = refdes
+    @property
+    def refdes(self):
+        return self._refdes
+
+    @property
+    def desc(self):
+        return self._desc
+
+    def define(self, **kwargs):
+        self._ident = kwargs.pop('ident')
+        self._refdes = kwargs.pop('refdes')
+        self._desc = kwargs.pop('desc')
+        super(GenericEntity, self).define(**kwargs)
 
     def __repr__(self):
         return '<GenericEntityBase {0} : {1}>' \
-               ''.format(self._refdes, self._ident)
+               ''.format(self.refdes, self.ident)
+
+    def _validate(self):
+        pass
 
 
-class EntityGroupBase(EntityBase):
-    def __init__(self, groupname, contextname=''):
-        super(EntityGroupBase, self).__init__()
-        self.contextname = ''
-        self.groupname = ''
-        self.complist = []
-        self.define(contextname, groupname)
-
-    def insert(self, item):
-        raise NotImplementedError
-
-    @property
-    def ident(self):
-        return (self.contextname + ' ' + self.groupname).strip()
-
-    def define(self, contextname, groupname):
-        self.contextname = contextname
-        self.groupname = groupname
-        self._defined = True
-
-
-class EntityBomBase(EntityBase):
+class GroupAwareEntity(GenericEntity):
     def __init__(self):
-        super(EntityBomBase, self).__init__()
-        self.grouplist = []
+        self._group = None
+        super(GroupAwareEntity, self).__init__()
 
     @property
-    def ident(self):
-        raise NotImplementedError
+    def group_name(self):
+        return self._group
 
-    def create_output_bom(self, *args, **kwargs):
-        raise NotImplementedError
+    def define(self, **kwargs):
+        self._group = kwargs.pop('group')
+        super(GroupAwareEntity, self).define(**kwargs)
 
-    def define(self, *args, **kwargs):
-        raise NotImplementedError
+    def _validate(self):
+        pass
