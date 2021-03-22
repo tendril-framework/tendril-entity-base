@@ -63,6 +63,13 @@ class EntityBase(ValidatableBase):
     def desc(self):
         raise NotImplementedError
 
+    def json(self):
+        return {
+            'ident': self.ident,
+            'refdes': self.refdes,
+            'desc': self.desc,
+        }
+
     def _validate(self):
         pass
 
@@ -92,6 +99,12 @@ class StructuredEntityBase(EntityBase):
 
     def _validate(self):
         pass
+
+    def json(self):
+        rval = super(StructuredEntityBase, self).json()
+        if self._structure:
+            rval['children'] = self.structure.json()
+        return rval
 
 
 class GenericEntity(StructuredEntityBase):
