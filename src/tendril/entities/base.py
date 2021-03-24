@@ -109,10 +109,15 @@ class StructuredEntityBase(EntityBase):
 
 class GenericEntity(StructuredEntityBase):
     def __init__(self):
+        self._domain = None
         self._ident = None
         self._desc = None
         self._refdes = None
         super(GenericEntity, self).__init__()
+
+    @property
+    def domain(self):
+        return self._domain
 
     @property
     def ident(self):
@@ -128,8 +133,9 @@ class GenericEntity(StructuredEntityBase):
 
     def define(self, **kwargs):
         self._ident = kwargs.pop('ident')
-        self._refdes = kwargs.pop('refdes')
-        self._desc = kwargs.pop('desc')
+        self._refdes = kwargs.pop('refdes', None)
+        self._desc = kwargs.pop('desc', "")
+        self._domain = kwargs.pop('domain', None)
         super(GenericEntity, self).define(**kwargs)
 
     def __repr__(self):
